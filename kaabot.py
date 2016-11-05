@@ -2,19 +2,19 @@
 # -*- coding: utf-8 -*-
 
 import logging
-
 import sleekxmpp
 import datetime
 import locale
 import dataset
 import argparse
 import getpass
+from sleekxmpp.util.misc_ops import setdefaultencoding
 
+setdefaultencoding('utf8')
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
 
 class KaaBot(sleekxmpp.ClientXMPP):
-
     def __init__(self, jid, password, database, room, nick):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
 
@@ -35,6 +35,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         self.send_presence()
         self.get_roster()
         self.plugin['xep_0045'].joinMUC(self.room, self.nick, wait=True)
+        self.plugin['xep_0172'].publish_nick(self.nick)
 
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
@@ -47,7 +48,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
                               mbody=mbody,
                               mtype='groupchat')
 
-        #TODO: Gestion fine des commandes pour le bot
+        # TODO: Gestion fine des commandes pour le bot
         elif msg['mucnick'] != self.nick and self.nick in msg['body'] and msg['body'].endswith('/log'):
             last_seen = self.users.find_one(nick=msg['mucnick'])['last_seen']
             filtered_log = (log for log in self.muc_log if log['datetime'] > last_seen)
@@ -73,7 +74,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
             if self.users.find_one(nick=presence['muc']['nick']):
                 last_seen = self.users.find_one(nick=presence['muc']['nick'])['last_seen']
                 msg = 'La dernière fois que j\'ai vu ta pomme c\'était le {date}'
-                msg_formatted = msg.format(date=datetime.datetime.strftime(last_seen,  format="%c"))
+                msg_formatted = msg.format(date=datetime.datetime.strftime(last_seen, format="%c"))
                 self.send_message(mto=presence['from'].bare, mbody=msg_formatted, mtype='groupchat')
 
     def muc_offline(self, presence):
@@ -82,6 +83,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
                 self.users.update(dict(nick=presence['muc']['nick'], last_seen=datetime.datetime.now()), ['nick'])
             else:
                 self.users.insert(dict(nick=presence['muc']['nick'], last_seen=datetime.datetime.now()))
+
 
 if __name__ == '__main__':
 
@@ -108,5 +110,6 @@ if __name__ == '__main__':
     bot = KaaBot(args.jid, args.password, args.database, args.muc, 'KaaBot')
     bot.register_plugin('xep_0045')
     bot.register_plugin('xep_0071')
+    bot.register_plugin('xep_0172')
     bot.connect()
     bot.process(block=True)
