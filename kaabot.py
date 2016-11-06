@@ -184,10 +184,18 @@ class KaaBot(sleekxmpp.ClientXMPP):
                           mtype='chat')
 
     def send_insults(self, nick, dest):
-        insults = ["Hé, "+ nick +", tu peux apprendre à écrire ?",
-                   "J'y comprends rien à ton charabia, "+ nick +" !",
-                   "T'as perdu l'usage de tes mains, "+ nick +" ?",
-                   "/me sombre dans une crise existentielle à cause de "+ nick +"."]
+        insults = [
+            "Hé, "+ nick +", tu peux apprendre à écrire ?",
+            "J'y comprends rien à ton charabia, "+ nick +" !",
+            nick +", quand on ne sait pas, on se tait !",
+            "La diarrhée verbale de "+ nick +" me donne la nausée.",
+            "/me sombre dans une crise existentielle à cause de "+ nick +".",
+            "/me ignore les propos incohérents de "+ nick +".",
+            "T'as perdu l'usage de tes mains, "+ nick +" ?",
+            nick +", je ne tolérerai pas que l'on me parle sur ce ton !",
+            "On dirait que "+ nick +" a envie de mourir.",
+            "Tu cherches la bagarre, "+ nick +" ?",
+        ]
 
         mbody = insults[random.randint(0, len(insults) - 1)]
         self.send_message(mto=dest,
