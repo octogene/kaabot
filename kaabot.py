@@ -60,17 +60,34 @@ class KaaBot(sleekxmpp.ClientXMPP):
             self.muc_log.insert(dict(datetime=datetime.datetime.now(),
                                      msg=msg['body'], user=msg['mucnick']))
 
-            if msg['mucnick'] != self.nick and msg['body'] == self.nick:
-                self.send_help(msg['from'])
-            elif msg['mucnick'] != self.nick and self.nick in msg['body']:
-                if msg['body'].split()[1] in ['log', 'histo']:
-                    self.send_log(msg['mucnick'], msg['from'])
-                elif msg['body'].split()[1] in ['help', 'aide']:
-                    self.send_help(msg['from'])
-                elif msg['body'].split()[1] in ['uptime']:
-                    self.send_uptime(msg['from'])
-                else:
-                    self.send_insults(msg['from'].bare)
+            # Stop dealing with this message if we sent it
+            if msg['mucnick'] == self.nick:
+                return
+
+            dest = msg['from']
+            nick = msg['mucnick']
+            splitbody = msg['body'].split(sep=self.nick, maxsplit=1)
+
+            # The message starts with the bot's name
+            if len(splitbody) == 2:
+                command = splitbody[1].lstrip('\t :').rstrip()
+                self.parse_command(command, nick, dest)
+
+            # The bot's nick was used in a message, but not at the beginning
+            elif self.nick in msg['body']:
+                self.send_insults(dest.bare)
+
+    def parse_command(self, command, nick, dest):
+        if not command: # original message was just the bot's name
+            self.send_help(dest)
+        elif command in ['log', 'histo']:
+            self.send_log(nick, dest)
+        elif command in ['help', 'aide']:
+            self.send_help(dest)
+        elif command in ['uptime']:
+            self.send_uptime(dest)
+        else:
+            self.send_insults(dest.bare)
 
     def send_help(self, dest):
         """Sends help messages to 'dest'.
