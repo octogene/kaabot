@@ -75,9 +75,11 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
             # The bot's nick was used in a message, but not at the beginning
             elif self.nick in msg['body']:
-                self.send_insults(dest.bare)
+                self.send_insults(nick, dest.bare)
 
     def parse_command(self, command, nick, dest):
+        """Parses a command sent by dest (nick).
+        """
         if not command: # original message was just the bot's name
             self.send_help(dest)
         elif command in ['log', 'histo']:
@@ -87,7 +89,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         elif command in ['uptime']:
             self.send_uptime(dest)
         else:
-            self.send_insults(dest.bare)
+            self.send_insults(nick, dest.bare)
 
     def send_help(self, dest):
         """Sends help messages to 'dest'.
@@ -155,11 +157,11 @@ class KaaBot(sleekxmpp.ClientXMPP):
                           mbody=mbody,
                           mtype='chat')
 
-    def send_insults(self, dest):
-        insults = ["Hé, tu peux apprendre à écrire ?",
-                   "J'y comprends rien à ton charabia",
-                   "T'as perdu l'usage de tes mains ?",
-                   "/me sombre dans une crise existentielle."]
+    def send_insults(self, nick, dest):
+        insults = ["Hé, "+ nick +", tu peux apprendre à écrire ?",
+                   "J'y comprends rien à ton charabia, "+ nick +" !",
+                   "T'as perdu l'usage de tes mains, "+ nick +" ?",
+                   "/me sombre dans une crise existentielle à cause de "+ nick +"."]
 
         mbody = insults[random.randint(0, len(insults) - 1)]
         self.send_message(mto=dest,
