@@ -70,7 +70,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
             # The message starts with the bot's name
             if len(splitbody) == 2:
-                command = splitbody[1].lstrip('\t :').rstrip()
+                command = splitbody[1].lstrip('\t :, ').rstrip()
                 self.parse_command(command, nick, dest)
 
             # The bot's nick was used in a message, but not at the beginning
