@@ -1,6 +1,7 @@
-# KaaBot
+KaaBot
+======
 
-<img align="right" height="200" src="https://code.lm7.fr/octogene/kaabot/raw/master/logo.png"/>
+<img align="right" height="200" src="/raw/master/logo.png"/>
 
 Super Simple Silly Bot for Jabber.
 
@@ -8,8 +9,8 @@ Requirements
 ------------
 
 * Python 2.7
-* SleekXMPP & dataset modules :
-``` 
+* SleekXMPP & dataset modules:
+```
     pip install sleekxmpp dataset
 ```
 
@@ -30,7 +31,3 @@ optional arguments:
   -db DATABASE, --database DATABASE
                         database to use
 ```
-
-
-
-
