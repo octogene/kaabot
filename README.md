@@ -28,6 +28,7 @@ optional arguments:
   -p PASSWORD, --password PASSWORD
                         password to use
   -m MUC, --muc MUC     Multi User Chatroom to join
+  -n NICK, --nick NICK  Nickname to use in the chatroom (default: KaaBot)
   -db DATABASE, --database DATABASE
                         database to use
 ```
