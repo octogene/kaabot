@@ -51,21 +51,32 @@ class KaaBot(sleekxmpp.ClientXMPP):
         """
         # Private message
         if msg['type'] in ('chat', 'normal'):
+            # Don't accept private messages unless they are initiated from a MUC
+            if msg['from'].bare != self.room:
+                msg.reply("Je ne parle pas aux étrangers, cause-moi sur une MUC !").send()
+                return
 
-            msg.reply("Thanks for sending\n%(body)s" % msg).send()
+            # Message's author info
+            dest = msg['from']
+            nick = msg['from'].resource
+
+            command = msg['body'].strip()
+            self.parse_command(command, nick, dest, echo=True)
 
         # Public (MUC) message
         elif msg['type'] in ('groupchat'):
+            # Message's author info
+            dest = msg['from']
+            nick = msg['mucnick']
+
             # Insert message in database with timestamp
             self.muc_log.insert(dict(datetime=datetime.datetime.now(),
-                                     msg=msg['body'], user=msg['mucnick']))
+                                     msg=msg['body'], user=nick))
 
             # Stop dealing with this message if we sent it
             if msg['mucnick'] == self.nick:
                 return
 
-            dest = msg['from']
-            nick = msg['mucnick']
             splitbody = msg['body'].split(sep=self.nick, maxsplit=1)
 
             # The message starts with the bot's name
@@ -77,13 +88,16 @@ class KaaBot(sleekxmpp.ClientXMPP):
             elif self.nick in msg['body']:
                 self.send_insults(nick, dest.bare)
 
-    def parse_command(self, command, nick, dest):
+    def parse_command(self, command, nick, dest, echo=False):
         """Parses a command sent by dest (nick).
+
+        If echo is True, the bot may report publicly information about the
+        commands processed.
         """
         if not command: # original message was just the bot's name
             self.send_help(dest)
         elif command in ['log', 'histo']:
-            self.send_log(nick, dest)
+            self.send_log(nick, dest, echo)
         elif command in ['help', 'aide']:
             self.send_help(dest)
         elif command in ['uptime']:
@@ -102,9 +116,15 @@ class KaaBot(sleekxmpp.ClientXMPP):
                           mbody=mbody,
                           mtype='chat')
 
-    def send_log(self, nick, dest):
+    def send_log(self, nick, dest, echo=False):
         """Look up backlog for 'nick' and send it to 'dest'.
         """
+        if echo:
+            gossip = nick + " consulte l'historique en loucedé !"
+            self.send_message(mto=dest.bare,
+                              mbody=gossip,
+                              mtype='groupchat')
+
         # Get offline timestamp from database and check if it exists.
         offline_timestamp = self.users.find_one(nick=nick)['offline_timestamp']
         if not offline_timestamp:
