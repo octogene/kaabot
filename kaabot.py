@@ -56,6 +56,10 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
         # Public (MUC) message
         elif msg['type'] in ('groupchat'):
+            # Insert message in database with timestamp
+            self.muc_log.insert(dict(datetime=datetime.datetime.now(),
+                                     msg=msg['body'], user=msg['mucnick']))
+
             if msg['mucnick'] != self.nick and msg['body'] == self.nick:
                 self.send_help(msg['from'])
             elif msg['mucnick'] != self.nick and self.nick in msg['body']:
@@ -67,12 +71,6 @@ class KaaBot(sleekxmpp.ClientXMPP):
                     self.send_uptime(msg['from'])
                 else:
                     self.send_insults(msg['from'].bare)
-
-            # Insert message in database with timestamp except for
-            # bot messages or commands.
-            elif msg['mucnick'] != self.nick:
-                self.muc_log.insert(dict(datetime=datetime.datetime.now(),
-                                         msg=msg['body'], user=msg['mucnick']))
 
     def send_help(self, dest):
         """Sends help messages to 'dest'.
