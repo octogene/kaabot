@@ -1,7 +1,7 @@
 KaaBot
 ======
 
-<img align="right" height="200" src="/raw/master/logo.png"/>
+<img align="right" height="200" src="/octogene/kaabot/raw/master/logo.png"/>
 
 Super Simple Silly Bot for Jabber.
 
