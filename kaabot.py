@@ -109,6 +109,8 @@ if __name__ == '__main__':
     argp.add_argument("-j", "--jid", dest="jid", help="JID to use")
     argp.add_argument("-p", "--password", dest="password", help="password to use")
     argp.add_argument("-m", "--muc", dest="muc", help="Multi User Chatroom to join")
+    argp.add_argument("-n", "--nick", dest="nick", default='KaaBot',
+                      help="Nickname to use in the chatroom (default: KaaBot)")
     argp.add_argument("-db", "--database", dest="database", help="database to use", default='muc_log.db')
 
     args = argp.parse_args()
@@ -123,7 +125,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=args.loglevel,
                         format='%(levelname)-8s %(message)s')
 
-    bot = KaaBot(args.jid, args.password, args.database, args.muc, 'KaaBot')
+    bot = KaaBot(args.jid, args.password, args.database, args.muc, args.nick)
     bot.register_plugin('xep_0045')
     bot.register_plugin('xep_0071')
     bot.register_plugin('xep_0172')
