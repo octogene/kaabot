@@ -9,11 +9,11 @@ import dataset
 import argparse
 import getpass
 import random
+import sqlalchemy
 from sleekxmpp.util.misc_ops import setdefaultencoding
 
 setdefaultencoding('utf8')
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
-logger = logging.getLogger(__name__)
 
 
 class KaaBot(sleekxmpp.ClientXMPP):
@@ -28,6 +28,11 @@ class KaaBot(sleekxmpp.ClientXMPP):
                                       'check_same_thread': False}})
 
         self.users = self.db['user']
+        # Initialize table with correct type.
+        self.users.create_column('nick', sqlalchemy.String)
+        self.users.create_column('offline_timestamp', sqlalchemy.DateTime)
+        self.users.create_column('online_timestamp', sqlalchemy.DateTime)
+
         self.muc_log = self.db['muc_log']
 
         self.add_event_handler("session_start", self.session_start)
@@ -75,8 +80,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         """Sends help messages to 'dest'
         """
         intro = ["Il a besoin d'aide le boulet ?"]
-        cmd = [
-            '([back]log|histo[rique]) : Historique des messages postés durant ton absence.',
+        cmd = ['([back]log|histo[rique]) : Historique des messages postés durant ton absence.',
             '(uptime) : Depuis combien de temps je suis debout ? ']
         mbody = '\n  '.join(intro + cmd)
         self.send_message(mto=dest,
@@ -86,10 +90,22 @@ class KaaBot(sleekxmpp.ClientXMPP):
     def send_log(self, nick, dest):
         """Look up backlog for 'nick' and send it to 'dest'.
         """
-        # Get offline timestamp from database.
+        # Get offline timestamp from database and check if it exists.
         offline_timestamp = self.users.find_one(nick=nick)['offline_timestamp']
+        if not offline_timestamp:
+            logging.debug('KaaBot : No offline timestamp for {nick}.'.format(nick=nick))
+            self.send_empty_log(dest)
+            return
+        else:
+            logging.debug(
+                'KaaBot : {nick} last seen on {date}'.format(nick=nick,
+                                                             date=offline_timestamp))
+
         # Get online timestamp from database.
         online_timestamp = self.users.find_one(nick=nick)['online_timestamp']
+        logging.debug(
+            'KaaBot : {nick} last connection on {date}'.format(nick=nick,
+                                                         date=online_timestamp))
 
         # Since filtered log is a generator we can't know in advance if
         # it will be empty. Creating filtered_log_empty allows us to act on
@@ -97,31 +113,31 @@ class KaaBot(sleekxmpp.ClientXMPP):
         filtered_log_empty = True
         filtered_log = (log for log in self.muc_log if
                         offline_timestamp < log['datetime'] < online_timestamp)
-        try:
-            for log in filtered_log:
-                filtered_log_empty = False
-                body = log['msg']
-                user = log['user']
-                self.send_message(mto=dest,
-                                  mbody=': '.join((user, body)),
-                                  mtype='chat')
 
-        # Catching TypeError exception if either one of the filtered_log
-        # variables is None.
-        except TypeError:
-            logging.debug(
-                'KaaBot : No backlog to send. Filtering messages failed')
+        for log in filtered_log:
+            filtered_log_empty = False
+            body = log['msg']
+            user = log['user']
+            self.send_message(mto=dest,
+                              mbody=': '.join((user, body)),
+                              mtype='chat')
 
         #  Send message if filtered_log is still empty.
         if filtered_log_empty:
-            mbody = 'Aucun message depuis ta dernière venue. T\'es content ?'
-            self.send_message(mto=dest,
-                              mbody=mbody,
-                              mtype='chat')
+            logging.debug('KaaBot : Filtered backlog empty.')
+            self.send_empty_log(dest)
+
+    def send_empty_log(self, dest):
+        """Send message if backlog empty.
+        """
+        mbody = "Aucun message depuis ta dernière venue. T'es content ?"
+        self.send_message(mto=dest,
+                          mbody=mbody,
+                          mtype='chat')
 
     def send_uptime(self, dest):
         uptime = str(datetime.datetime.now() - self.online_timestamp)
-        mbody = 'Je suis debout depuis {uptime}'.format(uptime=uptime)
+        mbody = "Je suis debout depuis {uptime}".format(uptime=uptime)
         self.send_message(mto=dest,
                           mbody=mbody,
                           mtype='chat')
@@ -138,9 +154,10 @@ class KaaBot(sleekxmpp.ClientXMPP):
                           mtype='groupchat')
 
     def muc_online(self, presence):
-        '''Handles MUC online presence.
-           On bot connection, called for each user in the MUC (bot included).
-        '''
+        """Handles MUC online presence.
+           On bot connection gets called for each
+           user in the MUC (bot included).
+        """
         if presence['muc']['nick'] != self.nick:
             # Check if nick in database.
             if self.users.find_one(nick=presence['muc']['nick']):
@@ -153,9 +170,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
                 # Check if bot is connecting for the first time.
                 if self.online_timestamp:
                     try:
-                        offline_timestamp = \
-                        self.users.find_one(nick=presence['muc']['nick'])[
-                            'offline_timestamp']
+                        offline_timestamp = self.users.find_one(nick=presence['muc']['nick'])['offline_timestamp']
                         msg = "La dernière fois que j'ai vu ta pomme c'était le {date}"
                         msg_formatted = msg.format(
                             date=datetime.datetime.strftime(offline_timestamp,
@@ -177,17 +192,12 @@ class KaaBot(sleekxmpp.ClientXMPP):
                               mtype='groupchat')
 
     def muc_offline(self, presence):
-        '''Handles MUC offline presence.
-        '''
+        """Handles MUC offline presence.
+        """
         if presence['muc']['nick'] != self.nick:
-            if self.users.find_one(nick=presence['muc']['nick']):
-                self.users.update(dict(nick=presence['muc']['nick'],
-                                       offline_timestamp=datetime.datetime.now()),
-                                  ['nick'])
-            else:
-                self.users.insert(dict(nick=presence['muc']['nick'],
-                                       offline_timestamp=datetime.datetime.now()))
-
+            self.users.update(dict(nick=presence['muc']['nick'],
+                                   offline_timestamp=datetime.datetime.now()),
+                              ['nick'])
 
 if __name__ == '__main__':
 
