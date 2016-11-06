@@ -27,9 +27,13 @@ class KaaBot(sleekxmpp.ClientXMPP):
         self.muc_log = self.db['muc_log']
 
         self.add_event_handler("session_start", self.session_start)
-        self.add_event_handler("groupchat_message", self.muc_message)
+        self.add_event_handler("message", self.message)
+        # self.add_event_handler("groupchat_message", self.muc_message)
         self.add_event_handler("muc::%s::got_online" % self.room, self.muc_online)
         self.add_event_handler("muc::%s::got_offline" % self.room, self.muc_offline)
+
+        for user in self.users.all():
+            self.users.update(dict(nick=user['nick'], conn_time=None, last_seen=None), ['nick'])
 
     def session_start(self, event):
         self.send_presence()
@@ -39,43 +43,55 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
+
             msg.reply("Thanks for sending\n%(body)s" % msg).send()
 
-    def muc_message(self, msg):
-        if msg['mucnick'] != self.nick and msg['body'] == self.nick:
-            mbody = "Il a besoin d'aide le boulet ?\n - /log : voir les messages postés durant ton absence."
-            self.send_message(mto=msg['from'].bare,
-                              mbody=mbody,
-                              mtype='groupchat')
+        elif msg['type'] in ('groupchat'):
 
-        # TODO: Gestion fine des commandes pour le bot
-        elif msg['mucnick'] != self.nick and self.nick in msg['body'] and msg['body'].endswith('/log'):
-            last_seen = self.users.find_one(nick=msg['mucnick'])['last_seen']
-            filtered_log = (log for log in self.muc_log if log['datetime'] > last_seen)
-            filtered_log_empty = True
-            for log in filtered_log:
-                filtered_log_empty = False
-                body = log['msg']
-                user = log['user']
-                self.send_message(mto=msg['from'].bare,
-                                  mbody=': '.join((user, body)),
-                                  mtype='groupchat')
-            if filtered_log_empty:
-                self.send_message(mto=msg['from'].bare,
-                                  mbody='Aucun message depuis ta dernière venue. T\'es content ?',
-                                  mtype='groupchat')
+            if msg['mucnick'] != self.nick and msg['body'] == self.nick:
+                mbody = "Il a besoin d'aide le boulet ?\n - /log : voir les messages postés durant ton absence."
+                self.send_message(mto=msg['from'],
+                                  mbody=mbody,
+                                  mtype='chat')
 
-        # Enregistre les messages dans la bdd exceptés ceux qui viennent du bot.
-        elif msg['mucnick'] != self.nick:
-            self.muc_log.insert(dict(datetime=datetime.datetime.now(), msg=msg['body'], user=msg['mucnick']))
+            # TODO: Gestion fine des commandes pour le bot
+            elif msg['mucnick'] != self.nick and self.nick in msg['body'] and msg['body'].endswith('/log'):
+                last_seen = self.users.find_one(nick=msg['mucnick'])['last_seen']
+                conn_time = self.users.find_one(nick=msg['mucnick'])['conn_time']
+
+                filtered_log_empty = True
+                filtered_log = (log for log in self.muc_log if log['datetime'] > last_seen and log['datetime'] < conn_time)
+                try:
+                    for log in filtered_log:
+                        filtered_log_empty = False
+                        body = log['msg']
+                        user = log['user']
+                        self.send_message(mto=msg['from'],
+                                           mbody=': '.join((user, body)),
+                                          mtype='chat')
+                except TypeError:
+                    logging.debug('Generator empty')
+
+                if filtered_log_empty:
+                    self.send_message(mto=msg['from'],
+                                      mbody='Aucun message depuis ta dernière venue. T\'es content ?',
+                                      mtype='chat')
+
+            # Enregistre les messages dans la bdd exceptés ceux qui viennent du bot.
+            elif msg['mucnick'] != self.nick:
+                self.muc_log.insert(dict(datetime=datetime.datetime.now(), msg=msg['body'], user=msg['mucnick']))
 
     def muc_online(self, presence):
         if presence['muc']['nick'] != self.nick:
+            print(presence)
             if self.users.find_one(nick=presence['muc']['nick']):
+                self.users.update(dict(nick=presence['muc']['nick'], conn_time=datetime.datetime.now()), ['nick'])
                 last_seen = self.users.find_one(nick=presence['muc']['nick'])['last_seen']
                 msg = 'La dernière fois que j\'ai vu ta pomme c\'était le {date}'
                 msg_formatted = msg.format(date=datetime.datetime.strftime(last_seen, format="%c"))
                 self.send_message(mto=presence['from'].bare, mbody=msg_formatted, mtype='groupchat')
+            else:
+                self.users.insert(dict(nick=presence['muc']['nick'], conn_time=datetime.datetime.now()))
 
     def muc_offline(self, presence):
         if presence['muc']['nick'] != self.nick:
