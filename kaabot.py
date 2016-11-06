@@ -79,12 +79,18 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
             splitbody = msg['body'].split(sep=self.nick, maxsplit=1)
 
-            # The message starts with the bot's name
+            # The message starts or ends with the bot's nick
             if len(splitbody) == 2:
-                command = splitbody[1].lstrip('\t :, ').rstrip()
+                if splitbody[1]:
+                    # Bot's nick is at the beginning
+                    command = splitbody[1]
+                else:
+                    # Bot's nick is at the end
+                    command = splitbody[0]
+                command = command.lstrip('\t :, ').rstrip()
                 self.parse_command(command, nick, dest)
 
-            # The bot's nick was used in a message, but not at the beginning
+            # The bot's nick was used in the middle of a message
             elif self.nick in msg['body']:
                 self.send_insults(nick, dest.bare)
 
