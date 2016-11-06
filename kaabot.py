@@ -173,20 +173,21 @@ class KaaBot(sleekxmpp.ClientXMPP):
            On bot connection gets called for each
            user in the MUC (bot included).
         """
-        if presence['muc']['nick'] != self.nick:
+        nick = presence['muc']['nick']
+        if nick != self.nick:
             # Check if nick in database.
-            if self.users.find_one(nick=presence['muc']['nick']):
+            if self.users.find_one(nick=nick):
 
                 # Update nick online timestamp.
-                self.users.update(dict(nick=presence['muc']['nick'],
+                self.users.update(dict(nick=nick,
                                        online_timestamp=datetime.datetime.now()),
                                   ['nick'])
 
                 # Check if bot is connecting for the first time.
                 if self.online_timestamp:
                     try:
-                        offline_timestamp = self.users.find_one(nick=presence['muc']['nick'])['offline_timestamp']
-                        msg = "La dernière fois que j'ai vu ta pomme c'était le {date}"
+                        offline_timestamp = self.users.find_one(nick=nick)['offline_timestamp']
+                        msg = "Salut, "+ nick +", la dernière fois que j'ai vu ta pomme c'était le {date}."
                         msg_formatted = msg.format(
                             date=datetime.datetime.strftime(offline_timestamp,
                                                             format="%c"))
@@ -195,9 +196,9 @@ class KaaBot(sleekxmpp.ClientXMPP):
                                           mtype='groupchat')
                     except TypeError:
                         msg = 'KaaBot : No offline timestamp yet for {nick}'
-                        logging.debug(msg.format(nick=presence['muc']['nick']))
+                        logging.debug(msg.format(nick=nick))
             else:
-                self.users.insert(dict(nick=presence['muc']['nick'],
+                self.users.insert(dict(nick=nick,
                                        online_timestamp=datetime.datetime.now()))
         else:
             # Set bot online timestamp.
@@ -209,8 +210,9 @@ class KaaBot(sleekxmpp.ClientXMPP):
     def muc_offline(self, presence):
         """Handles MUC offline presence.
         """
-        if presence['muc']['nick'] != self.nick:
-            self.users.update(dict(nick=presence['muc']['nick'],
+        nick = presence['muc']['nick']
+        if nick != self.nick:
+            self.users.update(dict(nick=nick,
                                    offline_timestamp=datetime.datetime.now()),
                               ['nick'])
 
