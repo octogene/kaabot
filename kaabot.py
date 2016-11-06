@@ -10,9 +10,7 @@ import argparse
 import getpass
 import random
 import sqlalchemy
-from sleekxmpp.util.misc_ops import setdefaultencoding
 
-setdefaultencoding('utf8')
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
 
@@ -77,11 +75,11 @@ class KaaBot(sleekxmpp.ClientXMPP):
                                          msg=msg['body'], user=msg['mucnick']))
 
     def send_help(self, dest):
-        """Sends help messages to 'dest'
+        """Sends help messages to 'dest'.
         """
         intro = ["Il a besoin d'aide le boulet ?"]
         cmd = ['([back]log|histo[rique]) : Historique des messages postés durant ton absence.',
-            '(uptime) : Depuis combien de temps je suis debout ? ']
+            '(uptime) : Depuis combien de temps je suis debout ?']
         mbody = '\n  '.join(intro + cmd)
         self.send_message(mto=dest,
                           mbody=mbody,
@@ -220,11 +218,11 @@ if __name__ == '__main__':
     args = argp.parse_args()
 
     if args.jid is None:
-        args.jid = raw_input("Username: ")
+        args.jid = input("Username: ")
     if args.password is None:
         args.password = getpass.getpass("Password: ")
     if args.muc is None:
-        args.muc = raw_input("MUC: ")
+        args.muc = input("MUC: ")
 
     logging.basicConfig(level=args.loglevel,
                         format='%(levelname)-8s %(message)s')

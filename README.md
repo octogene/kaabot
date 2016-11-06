@@ -11,7 +11,7 @@ Requirements
 * Python 3.1
 * SleekXMPP & dataset modules:
 ```
-    pip install sleekxmpp dataset
+    pip3 install sleekxmpp dataset
 ```
 
 Usage
