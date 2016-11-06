@@ -49,7 +49,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         elif msg['type'] in ('groupchat'):
 
             if msg['mucnick'] != self.nick and msg['body'] == self.nick:
-                mbody = "Il a besoin d'aide le boulet ?\n - /log : voir les messages postés durant ton absence."
+                mbody = "Il a besoin d'aide le boulet ?\n- /log : voir les messages postés durant ton absence."
                 self.send_message(mto=msg['from'],
                                   mbody=mbody,
                                   mtype='chat')
@@ -103,7 +103,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
 if __name__ == '__main__':
 
-    argp = argparse.ArgumentParser()
+    argp = argparse.ArgumentParser(description="Super Simple Silly Bot for Jabber")
     argp.add_argument('-d', '--debug', help='set logging to DEBUG', action='store_const',
                       dest='loglevel', const=logging.DEBUG, default=logging.INFO)
     argp.add_argument("-j", "--jid", dest="jid", help="JID to use")
