@@ -42,44 +42,58 @@ class KaaBot(sleekxmpp.ClientXMPP):
         self.plugin['xep_0172'].publish_nick(self.nick)
 
     def message(self, msg):
+        """Handles incoming messages.
+        """
+        # Private message
         if msg['type'] in ('chat', 'normal'):
 
             msg.reply("Thanks for sending\n%(body)s" % msg).send()
 
+        # Public (MUC) message
         elif msg['type'] in ('groupchat'):
 
             if msg['mucnick'] != self.nick and msg['body'] == self.nick:
-                mbody = "Il a besoin d'aide le boulet ?\n- /log : voir les messages postés durant ton absence."
-                self.send_message(mto=msg['from'],
-                                  mbody=mbody,
-                                  mtype='chat')
+                self.send_help(msg['from'])
 
             # TODO: Gestion fine des commandes pour le bot
             elif msg['mucnick'] != self.nick and self.nick in msg['body'] and msg['body'].endswith('/log'):
-                last_seen = self.users.find_one(nick=msg['mucnick'])['last_seen']
-                conn_time = self.users.find_one(nick=msg['mucnick'])['conn_time']
-
-                filtered_log_empty = True
-                filtered_log = (log for log in self.muc_log if log['datetime'] > last_seen and log['datetime'] < conn_time)
-                try:
-                    for log in filtered_log:
-                        filtered_log_empty = False
-                        body = log['msg']
-                        user = log['user']
-                        self.send_message(mto=msg['from'],
-                                           mbody=': '.join((user, body)),
-                                          mtype='chat')
-                except TypeError:
-                    logging.debug('Generator empty')
-
-                if filtered_log_empty:
-                    self.send_message(mto=msg['from'],
-                                      mbody='Aucun message depuis ta dernière venue. T\'es content ?',
-                                      mtype='chat')
+                self.send_log(msg['mucnick'], msg['from'])
 
             # Enregistre les messages dans la bdd exceptés ceux qui viennent du bot.
             elif msg['mucnick'] != self.nick:
                 self.muc_log.insert(dict(datetime=datetime.datetime.now(), msg=msg['body'], user=msg['mucnick']))
+
+    def send_help(self, dest):
+        """Sends help messages to 'dest'
+        """
+        mbody = "Il a besoin d'aide le boulet ?\n- /log : voir les messages postés durant ton absence."
+        self.send_message(mto=dest,
+                          mbody=mbody,
+                          mtype='chat')
+
+    def send_log(self, nick, dest):
+        """Look up backlog for 'nick' and send it to 'dest'.
+        """
+        last_seen = self.users.find_one(nick=nick)['last_seen']
+        conn_time = self.users.find_one(nick=nick)['conn_time']
+
+        filtered_log_empty = True
+        filtered_log = (log for log in self.muc_log if log['datetime'] > last_seen and log['datetime'] < conn_time)
+        try:
+            for log in filtered_log:
+                filtered_log_empty = False
+                body = log['msg']
+                user = log['user']
+                self.send_message(mto=msg['from'],
+                                  mbody=': '.join((user, body)),
+                                  mtype='chat')
+        except TypeError:
+            logging.debug('Generator empty')
+
+        if filtered_log_empty:
+            self.send_message(mto=dest,
+                              mbody='Aucun message depuis ta dernière venue. T\'es content ?',
+                              mtype='chat')
 
     def muc_online(self, presence):
         if presence['muc']['nick'] != self.nick:
