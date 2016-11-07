@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import json
-from json import JSONDecodeError
 import logging
 import sleekxmpp
 import datetime
@@ -11,7 +10,6 @@ import dataset
 import argparse
 import getpass
 import random
-import string
 import sqlalchemy
 
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
@@ -60,7 +58,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
             raise
         try:
             vocabulary = json.load(fd)
-        except JSONDecodeError:
+        except ValueError: # json.JSONDecodeError in Python >= 3.5
             logging.warning(("Invalid JSON vocabulary file '{filename}'. "
                              "Minimal vocabulary will be set.").format(filenam=vocabulary_file))
             vocabulary = {'insults': ['If I had vocabulary, I would insult {nick}.']}
