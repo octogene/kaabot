@@ -60,8 +60,10 @@ class KaaBot(sleekxmpp.ClientXMPP):
             vocabulary = json.load(fd)
         except ValueError: # json.JSONDecodeError in Python >= 3.5
             logging.warning(("Invalid JSON vocabulary file '{filename}'. "
-                             "Minimal vocabulary will be set.").format(filenam=vocabulary_file))
-            vocabulary = {'insults': ['If I had vocabulary, I would insult {nick}.']}
+                             "Minimal vocabulary will be set.")
+                            .format(filename=vocabulary_file))
+            vocabulary = {'insults':
+                          ['If I had vocabulary, I would insult {nick}.']}
 
         return vocabulary
 
@@ -141,7 +143,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         """Sends help messages to 'dest'.
         """
         intro = ["Il a besoin d'aide le boulet ?"]
-        cmd = [('([back]log|histo[rique]) : Historique'
+        cmd = [('(log|histo) : Historique'
                'des messages postés durant ton absence.'),
             '(uptime) : Depuis combien de temps je suis debout ?']
         mbody = '\n  '.join(intro + cmd)
@@ -238,7 +240,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
                 # Check if bot is connecting for the first time.
                 if self.online_timestamp:
                     try:
-                        offline_timestamp = self.users.find_one(nick=nick)['offline_timestamp']
+                        user = self.users.find_one(nick=nick)
+                        offline_timestamp = user['offline_timestamp']
                         msg = ("Salut {nick}, la dernière fois"
                                " que j'ai vu ta pomme c'était le {date}.")
                         msg_formatted = msg.format(nick=nick,
