@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+from json import JSONDecodeError
 import logging
 import sleekxmpp
 import datetime
@@ -26,7 +27,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
         self.db = dataset.connect('sqlite:///{db}'.format(db=database),
                                   engine_kwargs={'connect_args': {
                                       'check_same_thread': False}})
-        self.init_vocabulary(vocabulary_file)
+
+        self.vocabulary = self.init_vocabulary(vocabulary_file)
 
         self.users = self.db['user']
         # Initialize table with correct type.
@@ -43,7 +45,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
         self.add_event_handler("muc::%s::got_offline" % self.room,
                                self.muc_offline)
 
-    def init_vocabulary(self, vocabulary_file):
+    @staticmethod
+    def init_vocabulary(vocabulary_file):
         """Reads the vocabulary file.
 
         If the file can't be opened, the program will crash.
@@ -52,16 +55,17 @@ class KaaBot(sleekxmpp.ClientXMPP):
         try:
             fd = open(vocabulary_file, encoding='UTF-8')
         except OSError:
-            logging.error("Can't open vocabulary file `"
-                          + vocabulary_file +"'!")
+            logging.error("Can't open vocabulary"
+                          " file {filename} !".format(filename=vocabulary_file))
             raise
         try:
-            self.vocabulary = json.load(fd)
+            vocabulary = json.load(fd)
         except JSONDecodeError:
-            logging.warning("Invalid JSON vocabulary file `"+ vocabulary_file
-                            +"'. Minimal vocabulary will be set.")
-            self.vocabulary = {'insults':
-                               ['If I had vocabulary, I would insult $NICK.']}
+            logging.warning(("Invalid JSON vocabulary file '{filename}'. "
+                             "Minimal vocabulary will be set.").format(filenam=vocabulary_file))
+            vocabulary = {'insults': ['If I had vocabulary, I would insult {nick}.']}
+
+        return vocabulary
 
     def session_start(self, event):
         self.send_presence()
@@ -76,7 +80,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
         if msg['type'] in ('chat', 'normal'):
             # Don't accept private messages unless they are initiated from a MUC
             if msg['from'].bare != self.room:
-                msg.reply("Je ne parle pas aux étrangers, cause-moi sur une MUC !").send()
+                msg.reply(("Je ne parle pas aux étrangers,"
+                           " cause-moi sur une MUC !")).send()
                 return
 
             # Message's author info
@@ -138,7 +143,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
         """Sends help messages to 'dest'.
         """
         intro = ["Il a besoin d'aide le boulet ?"]
-        cmd = ['([back]log|histo[rique]) : Historique des messages postés durant ton absence.',
+        cmd = [('([back]log|histo[rique]) : Historique'
+               'des messages postés durant ton absence.'),
             '(uptime) : Depuis combien de temps je suis debout ?']
         mbody = '\n  '.join(intro + cmd)
         self.send_message(mto=dest,
@@ -157,13 +163,15 @@ class KaaBot(sleekxmpp.ClientXMPP):
         # Get offline timestamp from database and check if it exists.
         offline_timestamp = self.users.find_one(nick=nick)['offline_timestamp']
         if not offline_timestamp:
-            logging.debug('KaaBot : No offline timestamp for {nick}.'.format(nick=nick))
+            logging.debug(('KaaBot : No offline'
+                           ' timestamp for {nick}.').format(nick=nick))
             self.send_empty_log(dest)
             return
         else:
             logging.debug(
-                'KaaBot : {nick} last seen on {date}'.format(nick=nick,
-                                                             date=offline_timestamp))
+                ('KaaBot : {nick} '
+                 'last seen on {date}').format(nick=nick,
+                                               date=offline_timestamp))
 
         # Get online timestamp from database.
         online_timestamp = self.users.find_one(nick=nick)['online_timestamp']
@@ -209,7 +217,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
     def send_insult(self, nick, dest):
         insults = self.vocabulary['insults']
         i = random.randint(0, len(insults) - 1)
-        insult = string.Template(insults[i]).safe_substitute({'nick': nick})
+        insult = insults[i].format(nick=nick)
         self.send_message(mto=dest,
                           mbody=insult,
                           mtype='groupchat')
@@ -233,8 +241,9 @@ class KaaBot(sleekxmpp.ClientXMPP):
                 if self.online_timestamp:
                     try:
                         offline_timestamp = self.users.find_one(nick=nick)['offline_timestamp']
-                        msg = "Salut, "+ nick +", la dernière fois que j'ai vu ta pomme c'était le {date}."
-                        msg_formatted = msg.format(
+                        msg = ("Salut {nick}, la dernière fois"
+                               " que j'ai vu ta pomme c'était le {date}.")
+                        msg_formatted = msg.format(nick=nick,
                             date=datetime.datetime.strftime(offline_timestamp,
                                                             format="%c"))
                         self.send_message(mto=presence['from'].bare,
