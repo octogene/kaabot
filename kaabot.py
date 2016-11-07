@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import sleekxmpp
 import datetime
@@ -9,13 +10,14 @@ import dataset
 import argparse
 import getpass
 import random
+import string
 import sqlalchemy
 
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
 
 class KaaBot(sleekxmpp.ClientXMPP):
-    def __init__(self, jid, password, database, room, nick):
+    def __init__(self, jid, password, database, room, nick, vocabulary_file):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
 
         self.room = room
@@ -24,6 +26,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         self.db = dataset.connect('sqlite:///{db}'.format(db=database),
                                   engine_kwargs={'connect_args': {
                                       'check_same_thread': False}})
+        self.init_vocabulary(vocabulary_file)
 
         self.users = self.db['user']
         # Initialize table with correct type.
@@ -39,6 +42,26 @@ class KaaBot(sleekxmpp.ClientXMPP):
                                self.muc_online)
         self.add_event_handler("muc::%s::got_offline" % self.room,
                                self.muc_offline)
+
+    def init_vocabulary(self, vocabulary_file):
+        """Reads the vocabulary file.
+
+        If the file can't be opened, the program will crash.
+        In case of parsing error, minimalistic vocabulary is set.
+        """
+        try:
+            fd = open(vocabulary_file, encoding='UTF-8')
+        except OSError:
+            logging.error("Can't open vocabulary file `"
+                          + vocabulary_file +"'!")
+            raise
+        try:
+            self.vocabulary = json.load(fd)
+        except JSONDecodeError:
+            logging.warning("Invalid JSON vocabulary file `"+ vocabulary_file
+                            +"'. Minimal vocabulary will be set.")
+            self.vocabulary = {'insults':
+                               ['If I had vocabulary, I would insult $NICK.']}
 
     def session_start(self, event):
         self.send_presence()
@@ -92,7 +115,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
             # The bot's nick was used in the middle of a message
             elif self.nick in msg['body']:
-                self.send_insults(nick, dest.bare)
+                self.send_insult(nick, dest.bare)
 
     def parse_command(self, command, nick, dest, echo=False):
         """Parses a command sent by dest (nick).
@@ -109,7 +132,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         elif command in ['uptime']:
             self.send_uptime(dest)
         else:
-            self.send_insults(nick, dest.bare)
+            self.send_insult(nick, dest.bare)
 
     def send_help(self, dest):
         """Sends help messages to 'dest'.
@@ -183,23 +206,12 @@ class KaaBot(sleekxmpp.ClientXMPP):
                           mbody=mbody,
                           mtype='chat')
 
-    def send_insults(self, nick, dest):
-        insults = [
-            "Hé, "+ nick +", tu peux apprendre à écrire ?",
-            "J'y comprends rien à ton charabia, "+ nick +" !",
-            nick +", quand on ne sait pas, on se tait !",
-            "La diarrhée verbale de "+ nick +" me donne la nausée.",
-            "/me sombre dans une crise existentielle à cause de "+ nick +".",
-            "/me ignore les propos incohérents de "+ nick +".",
-            "T'as perdu l'usage de tes mains, "+ nick +" ?",
-            nick +", je ne tolérerai pas que l'on me parle sur ce ton !",
-            "On dirait que "+ nick +" a envie de mourir.",
-            "Tu cherches la bagarre, "+ nick +" ?",
-        ]
-
-        mbody = insults[random.randint(0, len(insults) - 1)]
+    def send_insult(self, nick, dest):
+        insults = self.vocabulary['insults']
+        i = random.randint(0, len(insults) - 1)
+        insult = string.Template(insults[i]).safe_substitute({'nick': nick})
         self.send_message(mto=dest,
-                          mbody=mbody,
+                          mbody=insult,
                           mtype='groupchat')
 
     def muc_online(self, presence):
@@ -258,6 +270,8 @@ if __name__ == '__main__':
                       action='store_const',
                       dest='loglevel', const=logging.DEBUG,
                       default=logging.INFO)
+    argp.add_argument("-db", "--database", dest="database",
+                      help="database to use", default="muc_log.db")
     argp.add_argument("-j", "--jid", dest="jid", help="JID to use")
     argp.add_argument("-p", "--password", dest="password",
                       help="password to use")
@@ -265,8 +279,9 @@ if __name__ == '__main__':
                       help="Multi User Chatroom to join")
     argp.add_argument("-n", "--nick", dest="nick", default='KaaBot',
                       help="Nickname to use in the chatroom (default: KaaBot)")
-    argp.add_argument("-db", "--database", dest="database",
-                      help="database to use", default="muc_log.db")
+    argp.add_argument("-V", "--vocabulary", dest="vocabulary_file",
+                      default="vocabulary.json",
+                      help="path to the vocabulary file")
 
     args = argp.parse_args()
 
@@ -280,7 +295,8 @@ if __name__ == '__main__':
     logging.basicConfig(level=args.loglevel,
                         format='%(levelname)-8s %(message)s')
 
-    bot = KaaBot(args.jid, args.password, args.database, args.muc, args.nick)
+    bot = KaaBot(args.jid, args.password, args.database,
+                 args.muc, args.nick, args.vocabulary_file)
     bot.register_plugin('xep_0045')
     bot.register_plugin('xep_0071')
     bot.register_plugin('xep_0172')
