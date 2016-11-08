@@ -8,10 +8,13 @@ Super Simple Silly Bot for Jabber.
 Requirements
 ------------
 
-* Python 3.1
-* SleekXMPP & dataset modules:
+* Python 3.1+
+* [SleekXMPP](http://sleekxmpp.com/) 1.3.1
+* [dataset](https://dataset.readthedocs.io/) 0.7.0
+* [pyxdg](https://freedesktop.org/wiki/Software/pyxdg/) 0.25
+
 ```
-    pip3 install sleekxmpp dataset
+    pip install -r requirements
 ```
 
 Installing
