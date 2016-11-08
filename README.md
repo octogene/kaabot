@@ -1,8 +1,6 @@
 KaaBot
 ======
 
-<img align="right" height="200" src="/octogene/kaabot/raw/master/logo.png"/>
-
 Super Simple Silly Bot for Jabber.
 
 Requirements
@@ -52,4 +50,10 @@ optional arguments:
   -n NICK, --nick NICK  nickname to use in the chatroom (default: KaaBot)
   -V VOCABULARY_FILE, --vocabulary VOCABULARY_FILE
                         path to an alternative vocabulary file
+                        
 ```
+
+License
+-------
+
+KaaBot is licensed under the Expat license also known as the MIT License.
