@@ -2,10 +2,10 @@
 	"help": [
 		"Il a besoin d'aide le boulet ?",
 		"(log|histo) : Historique des messages postés durant ton absence.",
-		"(uptime) : Depuis combien de temps je suis debout ?"
+		"(uptime) : Depuis combien de temps suis-je debout ?"
 	],
 	"empty_log": [
-		"Aucun message depuis ta dernière venue. T'es content ?",
+		"Aucun message depuis ta dernière venue. T'es content·e ?",
 		"J'ai beau avoir une mémoire d'éléphant, je ne me souviens de rien te concernant."
 	],
 	"gossips": [
@@ -17,16 +17,16 @@
 		"Me voilà !"
 	],
 	"insults": [
-		"Hé, {nick}, tu peux apprendre à écrire ?",
-		"J'y comprends rien à ton charabia, {nick} !",
-		"{nick}, quand on ne sait pas, on se tait !",
+		"Hé, {nick}, tu peux apprendre à écrire ?",
+		"J'y comprends rien à ton charabia, {nick} !",
+		"{nick}, quand on ne sait pas, on se tait !",
 		"La diarrhée verbale de {nick} me donne la nausée.",
 		"/me sombre dans une crise existentielle à cause de {nick}.",
 		"/me ignore les propos incohérents de {nick}.",
-		"T'as perdu l'usage de tes mains, {nick} ?",
-		"{nick}, je ne tolérerai pas que l'on me parle sur ce ton !",
+		"T'as perdu l'usage de tes mains, {nick} ?",
+		"{nick}, je ne tolérerai pas que l'on me parle sur ce ton !",
 		"On dirait que {nick} a envie de mourir.",
-		"Tu cherches la bagarre, {nick} ?"
+		"Tu cherches la bagarre, {nick} ?"
 	],
 	"uptime": [
 		"Je suis debout depuis {uptime}.",
@@ -34,13 +34,13 @@
 		"Voilà {uptime} que j'écoutes vos discussions insipides."
 	],
 	"refusals": [
-		"Je ne parle pas aux étrangers, cause-moi sur une MUC !",
-		"Ma maman m'a dit de ne pas parler à des inconnus. Essaye plutôt sur une MUC."
+		"Je ne parle pas aux étranger·e·s, cause-moi sur une MUC !",
+		"Ma maman m'a dit de ne pas parler à des inconnu·e·s. Essaye plutôt sur une MUC."
 	],
 	"welcome": [
 		"Salut {nick}, la dernière fois que j'ai vu ta pomme c'était le {date}.",
 		"{nick}, personne n'avait remarqué que tu étais parti·e depuis le {date}.",
-		"{nick} n'est pas venu·e depuis le {date}, mais on s'en est bien passés.",
+		"{nick} n'est pas venu·e depuis le {date}, mais on s'en était bien passés.",
 		"L'absence de {nick} depuis le {date} était une bénédiciton, mais ce temps est révolu !"
 	]
 }
