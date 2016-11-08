@@ -1,4 +1,9 @@
 {
+	"help": [
+		"Il a besoin d'aide le boulet ?",
+		"(log|histo) : Historique des messages postés durant ton absence.",
+		"(uptime) : Depuis combien de temps je suis debout ?"
+	],
 	"insults": [
 		"Hé, {nick}, tu peux apprendre à écrire ?",
 		"J'y comprends rien à ton charabia, {nick} !",
