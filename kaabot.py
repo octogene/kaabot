@@ -14,7 +14,6 @@ import random
 import sqlalchemy
 import xdg
 
-
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
 default_vocabulary = {
@@ -116,7 +115,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
         try:
             vocabulary = json.load(fd)
-        except ValueError: # json.JSONDecodeError in Python >= 3.5
+        except ValueError:  # json.JSONDecodeError in Python >= 3.5
             logging.warning(("Invalid JSON vocabulary file '{filename}'. "
                              "Minimal vocabulary will be set.")
                             .format(filename=vocabulary_file))
@@ -185,7 +184,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         If echo is True, the bot may report publicly information about the
         commands processed.
         """
-        if not command: # original message was just the bot's name
+        if not command:  # original message was just the bot's name
             self.send_help(dest)
         elif command in ['log', 'histo']:
             self.send_log(nick, dest, echo)
@@ -201,8 +200,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
         """
         intro = ["Il a besoin d'aide le boulet ?"]
         cmd = [('(log|histo) : Historique'
-               'des messages postés durant ton absence.'),
-            '(uptime) : Depuis combien de temps je suis debout ?']
+                'des messages postés durant ton absence.'),
+               '(uptime) : Depuis combien de temps je suis debout ?']
         mbody = '\n  '.join(intro + cmd)
         self.send_message(mto=dest,
                           mbody=mbody,
@@ -232,9 +231,9 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
         # Get online timestamp from database.
         online_timestamp = self.users.find_one(nick=nick)['online_timestamp']
-        logging.debug(
-            'KaaBot : {nick} last connection on {date}'.format(nick=nick,
-                                                         date=online_timestamp))
+        logging.debug(('KaaBot : {nick} last'
+                       ' connection on {date}').format(nick=nick,
+                                                       date=online_timestamp))
 
         # Since filtered log is a generator we can't know in advance if
         # it will be empty. Creating filtered_log_empty allows us to act on
@@ -245,10 +244,9 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
         for log in filtered_log:
             filtered_log_empty = False
-            body = log['msg']
-            user = log['user']
+            log_message = ': '.join((log['user'], log['msg']))
             self.send_message(mto=dest,
-                              mbody=': '.join((user, body)),
+                              mbody=log_message,
                               mtype='chat')
 
         #  Send message if filtered_log is still empty.
@@ -302,8 +300,9 @@ class KaaBot(sleekxmpp.ClientXMPP):
                         msg = ("Salut {nick}, la dernière fois"
                                " que j'ai vu ta pomme c'était le {date}.")
                         msg_formatted = msg.format(nick=nick,
-                            date=datetime.datetime.strftime(offline_timestamp,
-                                                            format="%c"))
+                                                   date=datetime.datetime.strftime(
+                                                       offline_timestamp,
+                                                       format="%c"))
                         self.send_message(mto=presence['from'].bare,
                                           mbody=msg_formatted,
                                           mtype='groupchat')
@@ -329,18 +328,19 @@ class KaaBot(sleekxmpp.ClientXMPP):
                                    offline_timestamp=datetime.datetime.now()),
                               ['nick'])
 
+
 if __name__ == '__main__':
 
     argp = argparse.ArgumentParser(
         description="Super Simple Silly Bot for Jabber")
-    argp.add_argument('-d', '--debug', help='set logging to DEBUG',
+    argp.add_argument('-d', '--debug', help="set logging to DEBUG",
                       action='store_const',
                       dest='loglevel', const=logging.DEBUG,
                       default=logging.INFO)
     argp.add_argument("-b", "--database", dest="database",
-                      help='path to an alternative database; the "{muc}" string'
-                      " in the name will be substituted with the MUC's name as"
-                      " provided by the --muc option")
+                      help="path to an alternative database; the '{muc}' string"
+                           " in the name will be substituted with "
+                           "the MUC's name as provided by the --muc option")
     argp.add_argument("-j", "--jid", dest="jid", help="JID to use")
     argp.add_argument("-p", "--password", dest="password",
                       help="password to use")
