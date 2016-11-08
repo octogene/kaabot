@@ -41,8 +41,10 @@ default_vocabulary = {
     'help': ["My vocabulary empty, I can't help you."],
     'empty_log': ["No log for you."],
     'gossips': ["{nick} is reading the back log."],
+    'greetings': ["/me is here!"],
     'insults': ['If I had vocabulary, I would insult {nick}.'],
     'uptime': ["I'm up for {uptime}."],
+    'welcome': ["{nick}'s last connection: {date}."],
     # Responses to direct messages (not on a MUC):
     'refusals': ["I don't accept direct messages. Try on a MUC."],
 }
@@ -327,14 +329,12 @@ class KaaBot(sleekxmpp.ClientXMPP):
                     try:
                         user = self.users.find_one(nick=nick)
                         offline_timestamp = user['offline_timestamp']
-                        msg = ("Salut {nick}, la dernière fois"
-                               " que j'ai vu ta pomme c'était le {date}.")
-                        msg_formatted = msg.format(nick=nick,
-                                                   date=datetime.datetime.strftime(
-                                                       offline_timestamp,
-                                                       format="%c"))
+                        date = datetime.datetime.strftime(offline_timestamp,
+                                                          format="%c")
+                        msg = self.pick_sentence('welcome').format(nick=nick,
+                                                                   date=date)
                         self.send_message(mto=presence['from'].bare,
-                                          mbody=msg_formatted,
+                                          mbody=msg,
                                           mtype='groupchat')
                     except TypeError:
                         msg = 'KaaBot : No offline timestamp yet for {nick}'
@@ -346,7 +346,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
             # Set bot online timestamp.
             self.online_timestamp = datetime.datetime.now()
             self.send_message(mto=presence['from'].bare,
-                              mbody='/me est dans la place !',
+                              mbody=self.pick_sentence('greetings'),
                               mtype='groupchat')
 
     def muc_offline(self, presence):

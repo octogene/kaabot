@@ -12,6 +12,10 @@
 		"{nick} consulte l'historique en loucedé !",
 		"Il semblerait que {nick} souhaite rester discret·e pour consulter l'historique."
 	],
+	"greetings": [
+		"/me est dans la place !",
+		"Me voilà !"
+	],
 	"insults": [
 		"Hé, {nick}, tu peux apprendre à écrire ?",
 		"J'y comprends rien à ton charabia, {nick} !",
@@ -32,5 +36,11 @@
 	"refusals": [
 		"Je ne parle pas aux étrangers, cause-moi sur une MUC !",
 		"Ma maman m'a dit de ne pas parler à des inconnus. Essaye plutôt sur une MUC."
+	],
+	"welcome": [
+		"Salut {nick}, la dernière fois que j'ai vu ta pomme c'était le {date}.",
+		"{nick}, personne n'avait remarqué que tu étais parti·e depuis le {date}.",
+		"{nick} n'est pas venu·e depuis le {date}, mais on s'en est bien passés.",
+		"L'absence de {nick} depuis le {date} était une bénédiciton, mais ce temps est révolu !"
 	]
 }
