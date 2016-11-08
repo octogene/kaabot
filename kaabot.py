@@ -33,7 +33,7 @@ import getpass
 import os
 import random
 import sqlalchemy
-import xdg
+import xdg.BaseDirectory
 
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
