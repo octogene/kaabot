@@ -9,10 +9,16 @@ import locale
 import dataset
 import argparse
 import getpass
+import os
 import random
 import sqlalchemy
+import xdg.BaseDirectory
 
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
+
+default_vocabulary = {
+    'insults': ['If I had vocabulary, I would insult {nick}.']
+}
 
 
 class KaaBot(sleekxmpp.ClientXMPP):
@@ -45,25 +51,53 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
     @staticmethod
     def init_vocabulary(vocabulary_file):
-        """Reads the vocabulary file.
+        """Reads the vocabulary from a JSON file.
 
-        If the file can't be opened, the program will crash.
-        In case of parsing error, minimalistic vocabulary is set.
+        If vocabulary_file is empty (i.e. the user didn't use the --vocabulary
+        option), a file named "vocabulary.json" is searched in the first
+        existing XDG "kaabot" config path, in order of preference (usually
+        $HOME/.config/kaabot/, then /etc/xdg/kaabot/).
+
+        If vocabulary_file contains a value, it is considered to be the path to
+        a valid vocabulary file.
+
+        Error handling:
+        - If the user-specified file can't be opened, the program will crash.
+        - Ditto if the XDG-found file exists but can't be opened.
+        - In case of parsing error (the file exists but is invalid JSON),
+          minimalistic vocabulary is set.
+        - Ditto if the user didn't use --vocabulary and no vocabulary file is
+          found in the XDG config path.
+        """
+        if not vocabulary_file:
+            config_dir = xdg.BaseDirectory.load_first_config("kaabot")
+            full_path = config_dir + "/vocabulary.json"
+            if os.path.exists(full_path):
+                vocabulary_file = full_path
+
+        if vocabulary_file:
+            return KaaBot.read_vocabulary_file(vocabulary_file)
+        else:
+            return default_vocabulary
+
+    @staticmethod
+    def read_vocabulary_file(vocabulary_file):
+        """Actually read and parse the vocabulary file.
         """
         try:
             fd = open(vocabulary_file, encoding='UTF-8')
         except OSError:
-            logging.error("Can't open vocabulary"
-                          " file {filename} !".format(filename=vocabulary_file))
+            logging.error("Can't open vocabulary file {filename}!"
+                          .format(filename=vocabulary_file))
             raise
+
         try:
             vocabulary = json.load(fd)
         except ValueError: # json.JSONDecodeError in Python >= 3.5
             logging.warning(("Invalid JSON vocabulary file '{filename}'. "
                              "Minimal vocabulary will be set.")
                             .format(filename=vocabulary_file))
-            vocabulary = {'insults':
-                          ['If I had vocabulary, I would insult {nick}.']}
+            vocabulary = default_vocabulary
 
         return vocabulary
 
@@ -288,10 +322,9 @@ if __name__ == '__main__':
     argp.add_argument("-m", "--muc", dest="muc",
                       help="Multi User Chatroom to join")
     argp.add_argument("-n", "--nick", dest="nick", default='KaaBot',
-                      help="Nickname to use in the chatroom (default: KaaBot)")
+                      help="nickname to use in the chatroom (default: KaaBot)")
     argp.add_argument("-V", "--vocabulary", dest="vocabulary_file",
-                      default="vocabulary.json",
-                      help="path to the vocabulary file")
+                      help="path to an alternative vocabulary file")
 
     args = argp.parse_args()
 
