@@ -16,10 +16,10 @@ locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
 
 class KaaBot(sleekxmpp.ClientXMPP):
-    def __init__(self, jid, password, database, room, nick, vocabulary_file):
+    def __init__(self, jid, password, database, muc, nick, vocabulary_file):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
 
-        self.room = room
+        self.muc = muc
         self.nick = nick
         self.online_timestamp = None
         self.db = dataset.connect('sqlite:///{db}'.format(db=database),
@@ -38,9 +38,9 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
         self.add_event_handler("session_start", self.session_start)
         self.add_event_handler("message", self.message)
-        self.add_event_handler("muc::%s::got_online" % self.room,
+        self.add_event_handler("muc::%s::got_online" % self.muc,
                                self.muc_online)
-        self.add_event_handler("muc::%s::got_offline" % self.room,
+        self.add_event_handler("muc::%s::got_offline" % self.muc,
                                self.muc_offline)
 
     @staticmethod
@@ -70,7 +70,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
     def session_start(self, event):
         self.send_presence()
         self.get_roster()
-        self.plugin['xep_0045'].joinMUC(self.room, self.nick, wait=True)
+        self.plugin['xep_0045'].joinMUC(self.muc, self.nick, wait=True)
         self.plugin['xep_0172'].publish_nick(self.nick)
 
     def message(self, msg):
@@ -79,7 +79,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         # Private message
         if msg['type'] in ('chat', 'normal'):
             # Don't accept private messages unless they are initiated from a MUC
-            if msg['from'].bare != self.room:
+            if msg['from'].bare != self.muc:
                 msg.reply(("Je ne parle pas aux étrangers,"
                            " cause-moi sur une MUC !")).send()
                 return
