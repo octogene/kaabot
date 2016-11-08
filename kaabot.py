@@ -28,7 +28,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
         self.muc = muc
         self.nick = nick
         self.online_timestamp = None
-        self.db = dataset.connect('sqlite:///{db}'.format(db=database),
+        database_path = self.find_database(database, muc)
+        self.db = dataset.connect('sqlite:///{db}'.format(db=database_path),
                                   engine_kwargs={'connect_args': {
                                       'check_same_thread': False}})
 
@@ -48,6 +49,27 @@ class KaaBot(sleekxmpp.ClientXMPP):
                                self.muc_online)
         self.add_event_handler("muc::%s::got_offline" % self.muc,
                                self.muc_offline)
+
+    @staticmethod
+    def find_database(database, muc):
+        """Returns the path to the database to use for the given MUC.
+
+        If `database` is empty, the file name is generated from the MUC's name
+        `muc` in the first "kaabot" XDG data dir (usually
+        `$HOME/.local/share/kaabot/`).
+
+        If it contains a value, it is assumed to be the path to the database. If
+        the name contains the string "{muc}", it will be substituted with the
+        MUC's name.
+
+        The returned path may or may not exist in the file system.
+        """
+        if database:
+            return database.format(muc=muc)
+
+        data_dir = xdg.BaseDirectory.save_data_path("kaabot")
+        database = "{muc}.db".format(muc=muc)
+        return "{}/{}".format(data_dir, database)
 
     @staticmethod
     def init_vocabulary(vocabulary_file):
@@ -314,8 +336,10 @@ if __name__ == '__main__':
                       action='store_const',
                       dest='loglevel', const=logging.DEBUG,
                       default=logging.INFO)
-    argp.add_argument("-db", "--database", dest="database",
-                      help="database to use", default="muc_log.db")
+    argp.add_argument("-b", "--database", dest="database",
+                      help='path to an alternative database; the "{muc}" string'
+                      " in the name will be substituted with the MUC's name as"
+                      " provided by the --muc option")
     argp.add_argument("-j", "--jid", dest="jid", help="JID to use")
     argp.add_argument("-p", "--password", dest="password",
                       help="password to use")
