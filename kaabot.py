@@ -42,6 +42,7 @@ default_vocabulary = {
     'empty_log': ["No log for you."],
     'gossips': ["{nick} is reading the back log."],
     'insults': ['If I had vocabulary, I would insult {nick}.'],
+    'uptime': ["I'm up for {uptime}."],
     # Responses to direct messages (not on a MUC):
     'refusals': ["I don't accept direct messages. Try on a MUC."],
 }
@@ -285,7 +286,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
     def send_uptime(self, dest):
         uptime = str(datetime.datetime.now() - self.online_timestamp)
-        mbody = "Je suis debout depuis {uptime}".format(uptime=uptime)
+        mbody = self.pick_sentence('uptime').format(uptime=uptime)
         self.send_message(mto=dest,
                           mbody=mbody,
                           mtype='chat')
