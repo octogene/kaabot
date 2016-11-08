@@ -38,7 +38,9 @@ import xdg.BaseDirectory
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
 default_vocabulary = {
-    'insults': ['If I had vocabulary, I would insult {nick}.']
+    'insults': ['If I had vocabulary, I would insult {nick}.'],
+    # Responses to direct messages (not on a MUC):
+    'refusals': ["I don't accept direct messages. Try on a MUC."],
 }
 
 
@@ -157,8 +159,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         if msg['type'] in ('chat', 'normal'):
             # Don't accept private messages unless they are initiated from a MUC
             if msg['from'].bare != self.muc:
-                msg.reply(("Je ne parle pas aux étrangers,"
-                           " cause-moi sur une MUC !")).send()
+                msg.reply(self.pick_sentence('refusals')).send()
                 return
 
             # Message's author info

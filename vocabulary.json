@@ -10,5 +10,9 @@
 		"{nick}, je ne tolérerai pas que l'on me parle sur ce ton !",
 		"On dirait que {nick} a envie de mourir.",
 		"Tu cherches la bagarre, {nick} ?"
+	],
+	"refusals": [
+		"Je ne parle pas aux étrangers, cause-moi sur une MUC !",
+		"Ma maman m'a dit de ne pas parler à des inconnus. Essaye plutôt sur une MUC."
 	]
 }
