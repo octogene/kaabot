@@ -4,6 +4,14 @@
 		"(log|histo) : Historique des messages postés durant ton absence.",
 		"(uptime) : Depuis combien de temps je suis debout ?"
 	],
+	"empty_log": [
+		"Aucun message depuis ta dernière venue. T'es content ?",
+		"J'ai beau avoir une mémoire d'éléphant, je ne me souviens de rien te concernant."
+	],
+	"gossips": [
+		"{nick} consulte l'historique en loucedé !",
+		"Il semblerait que {nick} souhaite rester discret·e pour consulter l'historique."
+	],
 	"insults": [
 		"Hé, {nick}, tu peux apprendre à écrire ?",
 		"J'y comprends rien à ton charabia, {nick} !",

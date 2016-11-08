@@ -39,6 +39,8 @@ locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
 default_vocabulary = {
     'help': ["My vocabulary empty, I can't help you."],
+    'empty_log': ["No log for you."],
+    'gossips': ["{nick} is reading the back log."],
     'insults': ['If I had vocabulary, I would insult {nick}.'],
     # Responses to direct messages (not on a MUC):
     'refusals': ["I don't accept direct messages. Try on a MUC."],
@@ -230,7 +232,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         """Look up backlog for 'nick' and send it to 'dest'.
         """
         if echo:
-            gossip = nick + " consulte l'historique en loucedé !"
+            gossip = self.pick_sentence('gossips').format(nick=nick)
             self.send_message(mto=dest.bare,
                               mbody=gossip,
                               mtype='groupchat')
@@ -268,7 +270,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
                               mbody=log_message,
                               mtype='chat')
 
-        #  Send message if filtered_log is still empty.
+        # Send message if filtered_log is still empty.
         if filtered_log_empty:
             logging.debug('KaaBot : Filtered backlog empty.')
             self.send_empty_log(dest)
@@ -276,7 +278,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
     def send_empty_log(self, dest):
         """Send message if backlog empty.
         """
-        mbody = "Aucun message depuis ta dernière venue. T'es content ?"
+        mbody = self.pick_sentence('empty_log')
         self.send_message(mto=dest,
                           mbody=mbody,
                           mtype='chat')
