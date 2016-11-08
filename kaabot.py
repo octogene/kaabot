@@ -173,7 +173,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
             nick = msg['from'].resource
 
             command = msg['body'].strip()
-            self.parse_command(command, nick, dest, echo=True)
+            self.parse_command(command, nick, dest, priv=True)
 
         # Public (MUC) message
         elif msg['type'] in ('groupchat'):
@@ -206,20 +206,21 @@ class KaaBot(sleekxmpp.ClientXMPP):
             elif self.nick in msg['body']:
                 self.send_insult(nick, dest.bare)
 
-    def parse_command(self, command, nick, dest, echo=False):
+    def parse_command(self, command, nick, dest, priv=False):
         """Parses a command sent by dest (nick).
 
-        If echo is True, the bot may report publicly information about the
-        commands processed.
+        `priv` should be True if the bot was contacted through a private
+        message, False if analysing a public message. In any case, the bot may
+        report publicly information about the commands processed.
         """
         if not command:  # original message was just the bot's name
             self.send_help(dest)
         elif command in ['log', 'histo']:
-            self.send_log(nick, dest, echo)
+            self.send_log(nick, dest, echo=priv)
         elif command in ['help', 'aide']:
             self.send_help(dest)
         elif command in ['uptime']:
-            self.send_uptime(dest)
+            self.send_uptime(dest, priv)
         else:
             self.send_insult(nick, dest.bare)
 
@@ -286,14 +287,26 @@ class KaaBot(sleekxmpp.ClientXMPP):
                           mbody=mbody,
                           mtype='chat')
 
-    def send_uptime(self, dest):
+    def send_uptime(self, dest, priv=False):
+        """Sends the uptime to `dest`.
+
+        If `priv` is true, the message is sent privately, otherwise it's send on
+        the MUC.
+        """
         uptime = str(datetime.datetime.now() - self.online_timestamp)
         mbody = self.pick_sentence('uptime').format(uptime=uptime)
-        self.send_message(mto=dest,
-                          mbody=mbody,
-                          mtype='chat')
+        if priv:
+            self.send_message(mto=dest,
+                              mbody=mbody,
+                              mtype='chat')
+        else:
+            self.send_message(mto=dest.bare,
+                              mbody=mbody,
+                              mtype='groupchat')
 
     def send_insult(self, nick, dest):
+        """Sends an insult about `nick` to `dest`.
+        """
         insult = self.pick_sentence('insults').format(nick=nick)
         self.send_message(mto=dest,
                           mbody=insult,
