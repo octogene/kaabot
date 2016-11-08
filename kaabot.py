@@ -291,12 +291,20 @@ class KaaBot(sleekxmpp.ClientXMPP):
                           mtype='chat')
 
     def send_insult(self, nick, dest):
-        insults = self.vocabulary['insults']
-        i = random.randint(0, len(insults) - 1)
-        insult = insults[i].format(nick=nick)
+        insult = self.pick_sentence('insults').format(nick=nick)
         self.send_message(mto=dest,
                           mbody=insult,
                           mtype='groupchat')
+
+    def pick_sentence(self, type):
+        """Returns a random sentence picked in the loaded vocabulary.
+
+        `type` can be any known category of the vocabulary file, e.g. 'insults'.
+        No substitution is done to the returned string.
+        """
+        voc = self.vocabulary[type]
+        i = random.randint(0, len(voc) - 1)
+        return voc[i]
 
     def muc_online(self, presence):
         """Handles MUC online presence.
