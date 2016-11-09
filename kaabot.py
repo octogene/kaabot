@@ -85,7 +85,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
         If `database` is empty, the file name is generated from the MUC's name
         `muc` in the first "kaabot" XDG data dir (usually
-        `$HOME/.local/share/kaabot/`).
+        `$HOME/.local/share/kaabot/`). If the XDG data dir can't be located, the
+        database is created/open in the work directory.
 
         If it contains a value, it is assumed to be the path to the database. If
         the name contains the string "{muc}", it will be substituted with the
@@ -98,7 +99,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
         data_dir = xdg.BaseDirectory.save_data_path("kaabot")
         database = "{muc}.db".format(muc=muc)
-        return "{}/{}".format(data_dir, database)
+        return os.path.join(data_dir, database)
 
     @staticmethod
     def init_vocabulary(vocabulary_file):
@@ -115,6 +116,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
         Error handling:
         - If the user-specified file can't be opened, the program will crash.
         - Ditto if the XDG-found file exists but can't be opened.
+        - If the XDG directory cannot be detected, "vocabulary.json" is searched
+          in the work directory.
         - In case of parsing error (the file exists but is invalid JSON),
           minimalistic vocabulary is set.
         - Ditto if the user didn't use --vocabulary and no vocabulary file is
@@ -122,7 +125,7 @@ class KaaBot(sleekxmpp.ClientXMPP):
         """
         if not vocabulary_file:
             config_dir = xdg.BaseDirectory.load_first_config("kaabot")
-            full_path = config_dir + "/vocabulary.json"
+            full_path = os.path.join(config_dir, "vocabulary.json")
             if os.path.exists(full_path):
                 vocabulary_file = full_path
 
