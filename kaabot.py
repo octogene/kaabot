@@ -140,13 +140,14 @@ class KaaBot(sleekxmpp.ClientXMPP):
         """
         try:
             fd = open(vocabulary_file, encoding='UTF-8')
-        except OSError:
+        except IOError:
             logging.error("Can't open vocabulary file {filename}!"
                           .format(filename=vocabulary_file))
             raise
 
         try:
             vocabulary = json.load(fd)
+            fd.close()
         except ValueError:  # json.JSONDecodeError in Python >= 3.5
             logging.warning(("Invalid JSON vocabulary file '{filename}'. "
                              "Minimal vocabulary will be set.")
