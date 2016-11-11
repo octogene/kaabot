@@ -273,7 +273,9 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
         for log in filtered_log:
             filtered_log_empty = False
-            log_message = ': '.join((log['user'], log['msg']))
+            log_message = "[{:%H:%m}] {}: {}".format(log['datetime'],
+                                                     log['user'],
+                                                     log['msg'])
             self.send_message(mto=dest,
                               mbody=log_message,
                               mtype='chat')
