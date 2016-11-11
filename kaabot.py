@@ -28,12 +28,13 @@ import sleekxmpp
 import datetime
 import locale
 import dataset
-import argparse
+import configargparse
 import getpass
 import os
 import random
 import sqlalchemy
 import xdg.BaseDirectory
+import pathlib
 
 locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
 
@@ -380,11 +381,14 @@ class KaaBot(sleekxmpp.ClientXMPP):
 
 if __name__ == '__main__':
 
-    argp = argparse.ArgumentParser(
+    config_dir = xdg.BaseDirectory.save_config_path("kaabot")
+    config_file = os.path.join(config_dir, 'config')
+
+    argp = configargparse.ArgParser(default_config_files=[config_file],
         description="Super Simple Silly Bot for Jabber")
     argp.add_argument('-d', '--debug', help="set logging to DEBUG",
                       action='store_const',
-                      dest='loglevel', const=logging.DEBUG,
+                      dest='debug', const=logging.DEBUG,
                       default=logging.INFO)
     argp.add_argument("-b", "--database", dest="database",
                       help="path to an alternative database; the '{muc}' string"
@@ -397,7 +401,7 @@ if __name__ == '__main__':
                       help="Multi User Chatroom to join")
     argp.add_argument("-n", "--nick", dest="nick", default='KaaBot',
                       help="nickname to use in the chatroom (default: KaaBot)")
-    argp.add_argument("-V", "--vocabulary", dest="vocabulary_file",
+    argp.add_argument("-V", "--vocabulary_file", dest="vocabulary_file",
                       help="path to an alternative vocabulary file")
 
     args = argp.parse_args()
@@ -409,8 +413,18 @@ if __name__ == '__main__':
     if args.muc is None:
         args.muc = input("MUC: ")
 
-    logging.basicConfig(level=args.loglevel,
+    logging.basicConfig(level=args.debug,
                         format='%(levelname)-8s %(message)s')
+
+    try:
+        pathlib.Path(config_file).touch(mode=0o600, exist_ok=False)
+        arguments = vars(args)
+        arguments.pop("debug")
+        with open(config_file, 'w') as f:
+                f.writelines('{}= {}\n'.format(k, v) for k, v
+                             in arguments.items() if v)
+    except FileExistsError:
+        logging.debug('Config file exists.')
 
     bot = KaaBot(args.jid, args.password, args.database,
                  args.muc, args.nick, args.vocabulary_file)
