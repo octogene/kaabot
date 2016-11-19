@@ -52,7 +52,8 @@ default_vocabulary = {
 
 
 class KaaBot(sleekxmpp.ClientXMPP):
-    def __init__(self, jid, password, database, muc, nick, vocabulary_file):
+    def __init__(self, jid, password, database, muc, nick, vocabulary_file,
+                 welcome):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
 
         self.muc = muc
@@ -64,6 +65,8 @@ class KaaBot(sleekxmpp.ClientXMPP):
                                       'check_same_thread': False}})
 
         self.vocabulary = self.init_vocabulary(vocabulary_file)
+
+        self.welcome = welcome
 
         self.users = self.db['user']
         # Initialize table with correct type.
@@ -319,6 +322,12 @@ class KaaBot(sleekxmpp.ClientXMPP):
                           mbody=insult,
                           mtype='groupchat')
 
+    def send_welcome(self, nick, dest, date):
+        msg = self.pick_sentence('welcome').format(nick=nick, date=date)
+        self.send_message(mto=dest,
+                          mbody=msg,
+                          mtype='groupchat')
+
     def pick_sentence(self, type):
         """Returns a random sentence picked in the loaded vocabulary.
 
@@ -351,11 +360,12 @@ class KaaBot(sleekxmpp.ClientXMPP):
                         offline_timestamp = user['offline_timestamp']
                         date = datetime.datetime.strftime(offline_timestamp,
                                                           format="%c")
-                        msg = self.pick_sentence('welcome').format(nick=nick,
-                                                                   date=date)
-                        self.send_message(mto=presence['from'].bare,
-                                          mbody=msg,
-                                          mtype='groupchat')
+                        logging.debug('KaaBot : user {} connected, last seen {}'
+                                      .format(nick, date))
+                        if self.welcome:
+                            dest = presence['from'].bare
+                            self.send_welcome(nick, dest, date)
+
                     except TypeError:
                         msg = 'KaaBot : No offline timestamp yet for {nick}'
                         logging.debug(msg.format(nick=nick))
@@ -377,6 +387,19 @@ class KaaBot(sleekxmpp.ClientXMPP):
             self.users.update(dict(nick=nick,
                                    offline_timestamp=datetime.datetime.now()),
                               ['nick'])
+
+
+def str_to_bool(text):
+    """Converts a string to a boolean.
+
+    Raises an exception if the string does not describe a boolean value.
+    """
+    text = text.lower()
+    if text in ["on", "true", "1"]:
+        return True
+    elif text in ["off", "false", "0"]:
+        return False
+    raise TypeError
 
 
 if __name__ == '__main__':
@@ -403,6 +426,9 @@ if __name__ == '__main__':
                       help="nickname to use in the chatroom (default: KaaBot)")
     argp.add_argument("-V", "--vocabulary_file", dest="vocabulary_file",
                       help="path to an alternative vocabulary file")
+    argp.add_argument("--welcome", dest="welcome", default="on",
+                      type=str_to_bool,
+                      help="welcome users joining the MUC (on/off, default: on)")
 
     args = argp.parse_args()
 
@@ -427,7 +453,8 @@ if __name__ == '__main__':
         logging.debug('Config file exists.')
 
     bot = KaaBot(args.jid, args.password, args.database,
-                 args.muc, args.nick, args.vocabulary_file)
+                 args.muc, args.nick, args.vocabulary_file,
+                 args.welcome)
     bot.register_plugin('xep_0045')
     bot.register_plugin('xep_0071')
     bot.register_plugin('xep_0172')

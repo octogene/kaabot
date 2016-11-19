@@ -37,7 +37,7 @@ Usage
 
 ```
 usage: kaabot [-h] [-d] [-b DATABASE] [-j JID] [-p PASSWORD] [-m MUC]
-              [-n NICK] [-V VOCABULARY_FILE]
+              [-n NICK] [-V VOCABULARY_FILE] [--welcome WELCOME]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -53,6 +53,7 @@ optional arguments:
   -n NICK, --nick NICK  nickname to use in the chatroom (default: KaaBot)
   -V VOCABULARY_FILE, --vocabulary_file VOCABULARY_FILE
                         path to an alternative vocabulary file
+  --welcome WELCOME     welcome users joining the MUC (on/off, default: on)
 ```
 
 License
