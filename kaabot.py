@@ -385,7 +385,7 @@ if __name__ == '__main__':
     config_file = os.path.join(config_dir, 'config')
 
     argp = configargparse.ArgParser(default_config_files=[config_file],
-        description="Super Simple Silly Bot for Jabber")
+        description="Super Simple Silly Bot for Jabber.")
     argp.add_argument('-d', '--debug', help="set logging to DEBUG",
                       action='store_const',
                       dest='debug', const=logging.DEBUG,

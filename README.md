@@ -29,6 +29,9 @@ mkdir $HOME/.config/kaabot
 cp vocabulary.json $HOME/.config/kaabot
 ```
 
+If no configuration file exists, one will be created automatically (typically
+in `$HOME/.config/kaabot/config`) when KaaBot is launched for the first time.
+
 Usage
 -----
 
@@ -40,7 +43,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -d, --debug           set logging to DEBUG
   -b DATABASE, --database DATABASE
-                        path to an alternative database; the "{muc}" string in
+                        path to an alternative database; the '{muc}' string in
                         the name will be substituted with the MUC's name as
                         provided by the --muc option
   -j JID, --jid JID     JID to use
@@ -48,9 +51,8 @@ optional arguments:
                         password to use
   -m MUC, --muc MUC     Multi User Chatroom to join
   -n NICK, --nick NICK  nickname to use in the chatroom (default: KaaBot)
-  -V VOCABULARY_FILE, --vocabulary VOCABULARY_FILE
+  -V VOCABULARY_FILE, --vocabulary_file VOCABULARY_FILE
                         path to an alternative vocabulary file
-                        
 ```
 
 License
